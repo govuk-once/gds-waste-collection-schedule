@@ -1,8 +1,8 @@
 
-module "api_gateway_pso" {
+module "api_gateway_lgdi" {
   source = "./modules/apigateway"
   // Metadata
-  name       = "pso"
+  name       = "lgdi"
   prefix     = local.prefix
   region     = var.region
   stage_name = "api"
@@ -15,8 +15,8 @@ module "api_gateway_pso" {
     "getHealthcheck" = {
       path                 = "status"
       method               = "GET"
-      lambda_function_name = module.lambda_pso_getHealthcheck.lambda_function_name
-      lambda_invoke_arn    = module.lambda_pso_getHealthcheck.lambda_invoke_arn
+      lambda_function_name = module.lambda_lgdi_getHealthcheck.lambda_function_name
+      lambda_invoke_arn    = module.lambda_lgdi_getHealthcheck.lambda_invoke_arn
     }
   }
 }

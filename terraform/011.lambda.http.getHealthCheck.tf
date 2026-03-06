@@ -1,4 +1,4 @@
-module "lambda_pso_getHealthcheck" {
+module "lambda_lgdi_getHealthcheck" {
   source        = "./modules/lambda"
   prefix        = local.prefix
   region        = var.region

@@ -155,7 +155,6 @@ env      = "${env}"`);
       -backend-config "region=eu-west-2"`
       ).text();
     }
-
   } catch (e) {
     // Gracefully handle command+c exits
     // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access

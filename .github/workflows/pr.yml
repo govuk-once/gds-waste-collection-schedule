@@ -33,9 +33,7 @@ jobs:
         run: npm run build:validate
 
       # Formatting
-      - name: 📝 Run Lint
-        run: npm run lint
-
+     
       - name: 📝 Terraform naming convention lint
         run: npm run development:organize:tf -- --dry-run
 

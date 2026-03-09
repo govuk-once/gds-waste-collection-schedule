@@ -33,7 +33,7 @@ const unwrap = async <Result>(promise: Promise<Result>): Promise<[Result, undefi
 bucket          = "${bucket}"
 key             = "state.tfstate"
 region          = "eu-west-2"
-id             = "${id}"`);
+env             = "${id}"`);
 
   // Ensure AWS env vars are available
   if (

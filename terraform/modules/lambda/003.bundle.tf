@@ -7,7 +7,7 @@ locals {
 data "archive_file" "bundle_zip" {
   type        = "zip"
   source_dir  = var.bundle_path
-  output_path = "../../dist/${local.bundle_filename}.zip"
+  output_path = "../dist/${local.bundle_filename}.zip"
 }
 
 # Upload signed bundle using KMS key

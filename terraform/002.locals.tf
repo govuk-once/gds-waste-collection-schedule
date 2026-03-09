@@ -1,8 +1,8 @@
 locals {
-  project = "gdsLGDI"
+  project = "gdslgdi"
   prefix  = "${local.project}-${var.env}"
   defaultTags = {
-    project   = "LGDI"
+    project   = "lgdi"
     env       = var.env
     managedBy = "Terraform"
     version   = var.code_version

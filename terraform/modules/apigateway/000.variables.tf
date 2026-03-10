@@ -52,23 +52,6 @@ variable "route_53_zone" {
   default     = null
 }
 
-/** Authorizers **/
-variable "mtls_truststore_url" {
-  description = "s3 object url pointing at the trust store - set to null if mTLS is not in use, note : can only be used together with route_53_zone"
-  type        = string
-  nullable    = true
-  default     = null
-}
-
-variable "authorizers" {
-  description = "Invoke ARN of lambda authorizer"
-  type = map(object({
-    lambda_arn           = string
-    lambda_function_name = string
-    lambda_invoke_arn    = string
-  }))
-  default = {}
-}
 
 /** Integrations injection for lambdas **/
 variable "integrations" {

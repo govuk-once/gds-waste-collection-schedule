@@ -12,7 +12,6 @@ resource "aws_vpc_endpoint" "vpc_endpoints_interfaces" {
     "network-firewall",
     "route53resolver",
     "secretsmanager",
-    "sqs",
     "ssm",
     "xray"
   ])

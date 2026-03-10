@@ -19,26 +19,6 @@ resource "aws_iam_role" "lambda" {
   tags = var.tags
 }
 
-# Gives the Lambda identity permission to interact with SQS
-resource "aws_iam_role_policy" "lambda_to_queue" {
-  for_each = var.publish_queues
-
-  name = join("-", [var.prefix, "iamr", var.function_name, "to-queue", each.key])
-  role = aws_iam_role.lambda.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      // Allow role assumptions
-      {
-        Effect   = "Allow"
-        Action   = ["sqs:SendMessage"]
-        Resource = values(var.publish_queues)
-      },
-    ]
-  })
-}
-
 # Gives the Lambda identity permission to interact with SSM
 resource "aws_iam_role_policy" "lambda_to_ssm" {
   name = join("-", [var.prefix, "iamr", var.function_name, "to-ssm"])

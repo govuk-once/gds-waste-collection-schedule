@@ -26,14 +26,6 @@ resource "aws_api_gateway_domain_name" "this" {
   regional_certificate_arn = data.aws_acm_certificate.this[0].arn
   security_policy          = "TLS_1_2"
 
-  # # Link the trustore if one's set in variables of this module
-  dynamic "mutual_tls_authentication" {
-    for_each = var.mtls_truststore_url != null ? [var.mtls_truststore_url] : []
-
-    content {
-      truststore_uri = mutual_tls_authentication.value
-    }
-  }
 }
 
 # Create DNS Record for API Gateway

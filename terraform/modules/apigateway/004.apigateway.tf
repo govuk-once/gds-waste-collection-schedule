@@ -42,27 +42,6 @@ resource "aws_api_gateway_rest_api" "this" {
         }
       }
     }
-
-    # Register custom authorizers
-    components = {
-      securitySchemes = {
-        for authorizer, config in var.authorizers : authorizer => {
-          type                           = "apiKey",
-          name                           = "Authorization"
-          in                             = "header"
-          "x-amazon-apigateway-authtype" = "CUSTOM"
-          "x-amazon-apigateway-authorizer" = {
-            type                           = "REQUEST",
-            identitySource                 = "method.request.header.Authorization",
-            authorizerUri                  = "${config.lambda_invoke_arn}"
-            authorizerCredentials          = aws_iam_role.apigw_role.arn
-            authorizerPayloadFormatVersion = "2.0",
-            authorizerResultTtlInSeconds   = 30,
-            # enableSimpleResponses          = true # This feature flag would be amazing, but it's for HTTP api gateway only, not rest
-          }
-        }
-      }
-    }
   })
 }
 

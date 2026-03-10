@@ -4,7 +4,6 @@
   "author": "",
   "type": "module",
   "scripts": {
-    "prettier": "npx prettier . --write",
     "build": "bun scripts/build.ts",
     "build:validate": "tsc",
     "development:organize:tf": "bun scripts/developer-organize-tf.ts",

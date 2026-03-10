@@ -1,0 +1,117 @@
+# Allow lambdas to assume role
+# https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html#permissions-executionrole-api
+resource "aws_iam_role" "lambda" {
+  name = join("-", [var.prefix, "iamr", var.function_name])
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      // Allow role assumptions
+      {
+        Effect = "Allow"
+        Action = ["sts:AssumeRole"]
+        Principal = {
+          Service = "lambda.amazonaws.com"
+          AWS     = data.aws_caller_identity.current.account_id
+        }
+      },
+    ]
+  })
+  tags = var.tags
+}
+
+# Gives the Lambda identity permission to interact with SSM
+resource "aws_iam_role_policy" "lambda_to_ssm" {
+  name = join("-", [var.prefix, "iamr", var.function_name, "to-ssm"])
+  role = aws_iam_role.lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      // Allow role assumptions
+      {
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter", "ssm:GetParametersByPath"]
+        Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.current.account_id}:parameter/${var.prefix}/*"
+      }
+    ]
+  })
+}
+
+// Explicit KMS Access to main key as well as any additional ones
+resource "aws_iam_role_policy" "lambda_to_kms" {
+  name = join("-", [var.prefix, "iamr", var.function_name, "to-kms"])
+  role = aws_iam_role.lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      // Allow role assumptions
+      {
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey"
+        ]
+        Resource = flatten(
+          concat(
+            [var.kms_key_arn],
+            [for value in values(var.additional_kms_decrypts) : value if value != null]
+          )
+        )
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "core_policies" {
+  for_each = { for policy in flatten([
+    # Cloudwatch and XRay log writing
+    "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess",
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+    # Allow lambdas to connect to VPCs - if there's subnet ids provided
+    var.security_group_ids != null && var.subnet_ids != null ? ["arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"] : [],
+    var.security_group_ids != null && var.subnet_ids != null ? ["arn:aws:iam::aws:policy/service-role/AWSLambdaENIManagementAccess"] : [],
+  ]) : policy => policy }
+  role       = aws_iam_role.lambda.name
+  policy_arn = each.key
+}
+
+# Any additional policies to attach to role injected via module variables
+resource "aws_iam_role_policy_attachment" "additional_policies" {
+  for_each   = var.additional_policies
+  role       = aws_iam_role.lambda.name
+  policy_arn = each.value
+}
+
+# DynamoDB IAM access policy 
+resource "aws_iam_role_policy" "dynamo_access" {
+  for_each = { for key, value in var.dynamo_tables : key => value if value.arn != null }
+
+  role = aws_iam_role.lambda.id
+  name = join("-", [var.prefix, "iamr", var.function_name, "dynamo", each.key])
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = concat(
+          each.value.scan == true ? [
+            "dynamodb:Query",
+            "dynamodb:Scan",
+          ] : [],
+          each.value.read == true ? [
+            "dynamodb:GetItem",
+          ] : [],
+          each.value.write == true ? [
+            "dynamodb:PutItem",
+            "dynamodb:UpdateItem",
+            "dynamodb:BatchWriteItem",
+            "dynamodb:DeleteItem",
+          ] : []
+        )
+        Effect   = "Allow"
+        Resource = each.value.arn
+      }
+    ]
+  })
+}

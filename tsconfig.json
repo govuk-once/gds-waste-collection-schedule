@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "allowUmdGlobalAccess": false,
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
+    "exactOptionalPropertyTypes": false,
+    "isolatedModules": true,
+    "baseUrl": "./",
+    "target": "esnext",
+    "module": "esnext",
+    "noEmit": true,
+    "moduleResolution": "bundler",
+    "esModuleInterop": true,
+    "declaration": true,
+    "removeComments": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowSyntheticDefaultImports": true,
+    "lib": ["ESNext.Error"],
+    "sourceMap": true,
+    "outDir": "./dist",
+    "incremental": true,
+    "skipLibCheck": true,
+    "strictNullChecks": true,
+    "noImplicitAny": true,
+    "strictBindCallApply": true,
+    "forceConsistentCasingInFileNames": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": ["node", "vitest/globals"],
+    "paths": {
+      "@common/*": ["./src/common/*"],
+      "@common": ["./src/common"],
+      "@project/*": ["./src/*"],
+      "@project": ["./src"]
+    }
+  },
+  "exclude": ["node_modules"]
+}

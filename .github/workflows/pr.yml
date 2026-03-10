@@ -1,0 +1,50 @@
+name: PR pipeline
+
+on:
+  # Trigger the workflow on pull request
+  pull_request
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # Setup
+      - name: ⚙️ Checkout Code
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+
+      - name: ⚙️ Setup Terraform
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        with:
+          node-version-file: '.node-version'
+
+      - name: ⚙️ Install Dependencies
+        run: npm ci
+
+      - name: ⚙️ Validate Typescript
+        run: npm run build:validate
+
+      # Formatting
+     
+      - name: 📝 Terraform naming convention lint
+        run: npm run development:organize:tf -- --dry-run
+
+      - name: Terraform init (no backend)
+        working-directory: ./terraform/
+        run: terraform init -backend=false
+
+      - name: 📝 Terraform Formatting
+        working-directory: ./terraform/
+        run: terraform fmt -check -diff -recursive
+
+      - name: 📝 Terraform validate
+        working-directory: ./terraform/
+        run: terraform validate

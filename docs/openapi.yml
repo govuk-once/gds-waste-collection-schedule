@@ -71,12 +71,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BadRequestResponse"
-        "404":
-          description: Postcode not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/PostcodeNotFound"
         default:
           description: Unexpected error
 
@@ -128,6 +122,11 @@ components:
           description: A unique reference number for each council provided by OS Data Hub
     BadRequestResponse:
       type: object
+      enum:
+        - councilNotSupported
+        - postcodeNotFound
+        - invalidPostcode
+        - unknownError
       properties:
         message:
           type: string

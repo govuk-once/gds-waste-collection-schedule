@@ -122,16 +122,13 @@ components:
           description: A unique reference number for each council provided by OS Data Hub
     BadRequestResponse:
       type: object
-      enum:
-        - councilNotSupported
-        - postcodeNotFound
-        - invalidPostcode
-        - unknownError
+      required:
+        - message
       properties:
         message:
           type: string
-    PostcodeNotFound:
-      type: object
-      properties:
-        message:
-          type: string
+          enum:
+          - councilNotSupported
+          - postcodeNotFound
+          - invalidPostcode
+          - unknownError

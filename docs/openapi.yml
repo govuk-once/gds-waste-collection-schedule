@@ -132,8 +132,3 @@ components:
           - postcodeNotFound
           - invalidPostcode
           - unknownError
-    PostcodeNotFound:
-      type: object
-      properties:
-        message:
-          type: string

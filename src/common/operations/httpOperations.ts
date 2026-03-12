@@ -36,6 +36,7 @@ export abstract class APIHandler<
 
   constructor(protected observability: ObservabilityService) {}
 
+  // Storage for IOC injections - when extending use actual class name instead of <object>
   protected dependencies: (() => HandlerDependencies<object>)[] = [];
   public injectDependencies(dependencies?: () => HandlerDependencies<object>) {
     this.observability.logger.info(`IoC Injection setup!`);
@@ -106,52 +107,9 @@ export abstract class APIHandler<
    * @returns
    */
   protected middlewares(middy: IMiddleware): IMiddleware {
-    //
-    // 1. Input cleanup (headers, JSON parsing, event normalization)
-    //
-    middy = middy
-      .use(httpHeaderNormalizer())
-      .use(httpJsonBodyParser({ disableContentTypeError: true }))
-      .use(httpEventNormalizer());
-
-    //
-    // 2. Request validation (validate event.body BEFORE handler runs)
-    //
-    middy = middy.use(requestValidatorMiddleware(this.requestBodySchema));
-
-    //
-    // 3. Handler executes here
-    //
-
-    //
-    // 4. Response validation (validate response.body BEFORE serialization)
-    //
-    middy = middy.use(responseValidatorMiddleware(this.responseBodySchema));
-
-    //
-    // 5. Serialization + error handling
-    //
-    middy = middy
-      .use(serializeBodyToJson()) // must run AFTER response validation
-      .use(httpErrorHandler());
-
-    //
-    // 6. Observability (wrap entire lifecycle)
-    //
-    middy = middy
-      .use(
-        injectLambdaContext(this.observability.logger, {
-          correlationIdPath: 'requestContext.requestId',
-        })
-      )
-      .use(captureLambdaHandler(this.observability.tracer))
-      .use(
-        logMetrics(this.observability.metrics, {
-          captureColdStartMetric: true,
-          throwOnEmptyMetrics: false,
-        })
-      );
-
+    middy = this.sanitizationMiddlewares(middy);
+    // middy = this.observabilityMiddlewares(middy);
+    middy = this.validationMiddlewares(middy);
     return middy;
   }
 

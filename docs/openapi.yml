@@ -1,7 +1,7 @@
-openapi: "3.0.3"
+openapi: '3.0.3'
 info:
   title: Waste Collection Schedule Service
-  version: "0.4"
+  version: '0.4'
 servers:
   - url: /api
 paths:
@@ -23,7 +23,7 @@ paths:
           schema:
             type: string
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -32,13 +32,13 @@ paths:
                 minItems: 1
                 maxItems: 70
                 items:
-                  $ref: "#/components/schemas/Schedule"
-        "400":
+                  $ref: '#/components/schemas/Schedule'
+        '400':
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BadRequestResponse"
+                $ref: '#/components/schemas/BadRequestResponse'
         default:
           description: Unexpected error
   /address/{postcode}:
@@ -55,7 +55,7 @@ paths:
             type: string
             pattern: '^[A-Z]{1,2}[0-9][0-9A-Z]?\s?[0-9][A-Z]{2}$'
       responses:
-        "200":
+        '200':
           description: OK
           content:
             application/json:
@@ -64,13 +64,13 @@ paths:
                 minItems: 1
                 maxItems: 8000
                 items:
-                  $ref: "#/components/schemas/ListAddress"
-        "400":
+                  $ref: '#/components/schemas/ListAddress'
+        '400':
           description: Bad request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BadRequestResponse"
+                $ref: '#/components/schemas/BadRequestResponse'
         default:
           description: Unexpected error
 
@@ -128,7 +128,7 @@ components:
         message:
           type: string
           enum:
-          - councilNotSupported
-          - postcodeNotFound
-          - invalidPostcode
-          - unknownError
+            - councilNotSupported
+            - postcodeNotFound
+            - invalidPostcode
+            - unknownError

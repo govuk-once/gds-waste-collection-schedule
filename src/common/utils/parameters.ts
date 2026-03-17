@@ -1,5 +1,4 @@
 export const StringParameters = {
-
   Config: {
     Cache: {
       Host: 'config/common/cache/host',
@@ -8,6 +7,7 @@ export const StringParameters = {
     },
     OrdinanceSurvey: {
       ApiKey: 'config/OrdinanceSurvey/ApiKey',
-      BaseUrl: 'config/OrdinanceSurvey/BaseUrl'
-    }}
+      BaseUrl: 'config/OrdinanceSurvey/BaseUrl',
+    },
+  },
 } as const;

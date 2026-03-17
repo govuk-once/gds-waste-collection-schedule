@@ -20,7 +20,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
     service = new OrdinanceSurveyService(configMock as any);
 
     configMock.getParameter
-      .mockResolvedValueOnce('API_KEY')   // ApiKey
+      .mockResolvedValueOnce('API_KEY') // ApiKey
       .mockResolvedValueOnce('https://os.test'); // BaseUrl
   });
 
@@ -78,18 +78,14 @@ describe('OrdinanceSurveyService (with caching)', () => {
         data: { results: [] },
       });
 
-      await expect(service.getPostcode(postcode)).rejects.toThrowError(
-        new httpErrors.BadRequest('postcodeNotFound')
-      );
+      await expect(service.getPostcode(postcode)).rejects.toThrowError(new httpErrors.BadRequest('postcodeNotFound'));
 
       // Cache should NOT contain an entry
       expect(service['cache'].has(cleaned)).toBe(false);
     });
 
     it('does not cache invalidPostcode errors', async () => {
-      await expect(service.getPostcode('INVALID')).rejects.toThrowError(
-        new httpErrors.BadRequest('invalidPostcode')
-      );
+      await expect(service.getPostcode('INVALID')).rejects.toThrowError(new httpErrors.BadRequest('invalidPostcode'));
 
       expect(service['cache'].has('INVALID')).toBe(false);
     });

@@ -24,20 +24,14 @@ describe('GetAddressByPostcode Handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    handler = new GetAddressByPostcode(
-      observabilityMock,
-      configMock,
-      ordinanceSurveyMock
-    );
+    handler = new GetAddressByPostcode(observabilityMock, configMock, ordinanceSurveyMock);
   });
 
   describe('implementation', () => {
     it('throws BadRequest when postcode is missing', async () => {
       const event: any = { pathParameters: {} };
 
-      await expect(
-        handler.implementation(event, {} as any)
-      ).rejects.toBeInstanceOf(httpErrors.BadRequest);
+      await expect(handler.implementation(event, {} as any)).rejects.toBeInstanceOf(httpErrors.BadRequest);
     });
 
     it('propagates invalidPostcode error from OrdinanceSurveyService', async () => {
@@ -48,9 +42,7 @@ describe('GetAddressByPostcode Handler', () => {
       const error = new httpErrors.BadRequest('invalidPostcode');
       ordinanceSurveyMock.getPostcode.mockRejectedValue(error);
 
-      await expect(
-        handler.implementation(event, {} as any)
-      ).rejects.toThrowError(error);
+      await expect(handler.implementation(event, {} as any)).rejects.toThrowError(error);
     });
 
     it('propagates postcodeNotFound error from OrdinanceSurveyService', async () => {
@@ -61,9 +53,7 @@ describe('GetAddressByPostcode Handler', () => {
       const error = new httpErrors.BadRequest('postcodeNotFound');
       ordinanceSurveyMock.getPostcode.mockRejectedValue(error);
 
-      await expect(
-        handler.implementation(event, {} as any)
-      ).rejects.toThrowError(error);
+      await expect(handler.implementation(event, {} as any)).rejects.toThrowError(error);
     });
 
     it('returns 200 and parsed addresses when postcode is valid', async () => {
@@ -83,9 +73,7 @@ describe('GetAddressByPostcode Handler', () => {
 
       const result = await handler.implementation(event, {} as any);
 
-      expect(result.body).toEqual(
-        mockAddresses.map((a) => IAddressByPostcodeSchema.parse(a))
-      );
+      expect(result.body).toEqual(mockAddresses.map((a) => IAddressByPostcodeSchema.parse(a)));
       expect(result.statusCode).toBe(200);
     });
 
@@ -98,9 +86,7 @@ describe('GetAddressByPostcode Handler', () => {
         { uprn: '123' }, // invalid
       ]);
 
-      await expect(
-        handler.implementation(event, {} as any)
-      ).rejects.toThrow();
+      await expect(handler.implementation(event, {} as any)).rejects.toThrow();
     });
   });
 });

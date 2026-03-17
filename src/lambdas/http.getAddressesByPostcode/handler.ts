@@ -35,7 +35,7 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
   constructor(
     protected observability: ObservabilityService,
     protected config: ConfigurationService,
-    public ordinanceSurveyService : OrdinanceSurveyService,
+    public ordinanceSurveyService: OrdinanceSurveyService,
     asyncDependencies?: () => HandlerDependencies<GetAddressByPostcode>
   ) {
     super(observability);
@@ -47,28 +47,34 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
     context: Context
   ): Promise<ITypedRequestResponse<z.infer<typeof responseBodySchema>>> {
     const postCode = event.pathParameters?.postcode;
-    if(!postCode) {
+    if (!postCode) {
       throw new httpErrors.BadRequest();
     }
 
     const addresses = await this.ordinanceSurveyService.getPostcode(postCode);
 
-    console.log(addresses)
+    console.log(addresses);
     return {
-      body: addresses.map((item : any) => IAddressByPostcodeSchema.parse(item)),
+      body: addresses.map((item: any) => IAddressByPostcodeSchema.parse(item)),
       statusCode: 200,
     };
   }
 }
 
-export const handler = new GetAddressByPostcode(iocGetObservabilityService(), iocGetConfigurationService(), iocGetOrdinanceSurveyService()).handler().use(
-  httpResponseSerializer({
-    serializers: [
-      {
-        regex: /^application\/json$/,
-        serializer: ({ body }) => JSON.stringify(body),
-      },
-    ],
-    defaultContentType: 'application/json',
-  })
-);
+export const handler = new GetAddressByPostcode(
+  iocGetObservabilityService(),
+  iocGetConfigurationService(),
+  iocGetOrdinanceSurveyService()
+)
+  .handler()
+  .use(
+    httpResponseSerializer({
+      serializers: [
+        {
+          regex: /^application\/json$/,
+          serializer: ({ body }) => JSON.stringify(body),
+        },
+      ],
+      defaultContentType: 'application/json',
+    })
+  );

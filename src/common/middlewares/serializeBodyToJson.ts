@@ -11,7 +11,7 @@ export const serializeBodyToJson = (
     // Ensure Content-Type is set
     response.headers = {
       ...(response.headers ?? {}),
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
 
     const body = response.body;
@@ -22,8 +22,6 @@ export const serializeBodyToJson = (
     }
 
     // Serialize anything JSON-compatible (objects, arrays, primitives, null)
-    response.body = pretty
-      ? JSON.stringify(body, null, 2)
-      : JSON.stringify(body);
+    response.body = pretty ? JSON.stringify(body, null, 2) : JSON.stringify(body);
   },
 });

@@ -55,5 +55,4 @@ export const handler = new GetAddressByPostcode(
   iocGetObservabilityService(),
   iocGetConfigurationService(),
   iocGetOrdinanceSurveyService()
-)
-  .handler()
+).handler();

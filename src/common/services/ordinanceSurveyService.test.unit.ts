@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/unbound-method */
+import type { ConfigurationService } from '@common/services/configurationService';
 import axios from 'axios';
 import httpErrors from 'http-errors';
 import type { Mocked } from 'vitest';
@@ -11,13 +12,16 @@ const axiosMock = axios as Mocked<typeof axios>;
 describe('OrdinanceSurveyService (with caching)', () => {
   let service: OrdinanceSurveyService;
 
+  // Vitest mock first → cast whole object later
   const configMock = {
     getParameter: vi.fn(),
   };
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new OrdinanceSurveyService(configMock as any);
+
+    // Cast the whole object, not the nested method
+    service = new OrdinanceSurveyService(configMock as unknown as ConfigurationService);
 
     configMock.getParameter
       .mockResolvedValueOnce('API_KEY') // ApiKey
@@ -56,21 +60,17 @@ describe('OrdinanceSurveyService (with caching)', () => {
       const result = await service.getPostcode(postcode);
 
       expect(result).toEqual(mapped);
-
-      // Cache should now contain the mapped result
       expect(service['cache'].get(cleaned)).toEqual(mapped);
     });
 
     it('returns cached results on subsequent calls and does not call axios again', async () => {
-      // First call populates cache
       axiosMock.get.mockResolvedValue(apiResponse);
-      await service.getPostcode(postcode);
 
-      // Second call should use cache
+      await service.getPostcode(postcode);
       const result = await service.getPostcode(postcode);
 
       expect(result).toEqual(mapped);
-      expect(axiosMock.get).toHaveBeenCalledTimes(1); // No second API call
+      expect(axiosMock.get).toHaveBeenCalledTimes(1);
     });
 
     it('throws postcodeNotFound and does NOT cache empty results', async () => {
@@ -80,7 +80,6 @@ describe('OrdinanceSurveyService (with caching)', () => {
 
       await expect(service.getPostcode(postcode)).rejects.toThrowError(new httpErrors.BadRequest('postcodeNotFound'));
 
-      // Cache should NOT contain an entry
       expect(service['cache'].has(cleaned)).toBe(false);
     });
 

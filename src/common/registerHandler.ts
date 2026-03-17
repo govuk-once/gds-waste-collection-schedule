@@ -1,8 +1,8 @@
-// ioc.ts
 import { search } from '@aws-lambda-powertools/jmespath';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { Metrics } from '@aws-lambda-powertools/metrics';
 import { Tracer } from '@aws-lambda-powertools/tracer';
+import type { APIGatewayProxyEventV2, APIGatewayProxyResultV2, Context } from 'aws-lambda';
 import 'reflect-metadata';
 import { container } from 'tsyringe';
 
@@ -25,11 +25,15 @@ container.register('Metrics', {
 });
 
 // Factory that produces a Lambda handler lazily
-export function registerHandler<T extends { handler: () => any }>(HandlerClass: new (...args: any[]) => T) {
-  return async (event: any, context: any) => {
+export function registerHandler<
+  T extends {
+    handler: () => (event: APIGatewayProxyEventV2, context: Context) => Promise<APIGatewayProxyResultV2>;
+  },
+>(HandlerClass: new (...args: unknown[]) => T) {
+  return async (event: APIGatewayProxyEventV2, context: Context): Promise<APIGatewayProxyResultV2> => {
     const instance = container.resolve<T>(HandlerClass);
     const handlerFn = instance.handler();
-    return handlerFn(event, context);
+    return await handlerFn(event, context);
   };
 }
 

@@ -19,16 +19,8 @@ import z from 'zod';
 const requestBodySchema = z.unknown().optional().nullable();
 const responseBodySchema = z.array(IAddressByPostcodeSchema);
 
-/* Lambda Request Example
-{
-  "pathParameters": {
-    "postcode": "LL57 1AU"
-  }  
-}
-*/
-
 export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, typeof responseBodySchema> {
-  public operationId: string = 'getAddressByPostcode';
+  public operationId = 'getAddressByPostcode';
   public requestBodySchema = requestBodySchema;
   public responseBodySchema = responseBodySchema;
 
@@ -44,7 +36,7 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
 
   public async implementation(
     event: ITypedRequestEvent<z.infer<typeof requestBodySchema>>,
-    context: Context
+    _context: Context
   ): Promise<ITypedRequestResponse<z.infer<typeof responseBodySchema>>> {
     const postCode = event.pathParameters?.postcode;
     if (!postCode) {
@@ -53,9 +45,8 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
 
     const addresses = await this.ordinanceSurveyService.getPostcode(postCode);
 
-    console.log(addresses);
     return {
-      body: addresses.map((item: any) => IAddressByPostcodeSchema.parse(item)),
+      body: addresses.map((item) => IAddressByPostcodeSchema.parse(item)),
       statusCode: 200,
     };
   }

@@ -1,12 +1,20 @@
 import { ConfigurationService } from '@common/services/configurationService';
 import { InMemoryTTLCache, StringParameters } from '@common/utils';
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import httpErrors from 'http-errors';
 
 type DPA = {
   UPRN: string;
   ADDRESS: string;
   LOCAL_CUSTODIAN_CODE: number | string;
+};
+
+type OSResult = {
+  DPA: DPA;
+};
+
+type OSApiResponse = {
+  results: OSResult[];
 };
 
 export function mapDpaToAddressSchema(dpa: DPA) {
@@ -19,7 +27,7 @@ export function mapDpaToAddressSchema(dpa: DPA) {
 
 export class OrdinanceSurveyService {
   // Cache results for 1 hour (3600000 ms)
-  private cache = new InMemoryTTLCache<string, any[]>(3600000);
+  private cache = new InMemoryTTLCache<string, ReturnType<typeof mapDpaToAddressSchema>[]>(3600000);
 
   constructor(protected config: ConfigurationService) {}
 
@@ -41,13 +49,14 @@ export class OrdinanceSurveyService {
     const baseUrl = await this.config.getParameter(StringParameters.Config.OrdinanceSurvey.BaseUrl);
 
     const url = `${baseUrl}?postcode=${encodeURIComponent(cleaned)}&key=${apiKey}`;
-    const response = await axios.get(url);
+
+    const response: AxiosResponse<OSApiResponse> = await axios.get(url);
 
     if (!response.data?.results?.length) {
       throw new httpErrors.BadRequest('postcodeNotFound');
     }
 
-    const mapped = response.data.results.map((item: { DPA: DPA }) => mapDpaToAddressSchema(item.DPA));
+    const mapped = response.data.results.map((item) => mapDpaToAddressSchema(item.DPA));
 
     // Cache the mapped result
     this.cache.set(cleaned, mapped);

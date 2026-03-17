@@ -47,11 +47,10 @@ export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof res
   }
 
   public async implementation(
-    event: ITypedRequestEvent<z.infer<typeof requestBodySchema>>,
-    context: Context
+    _event: ITypedRequestEvent<z.infer<typeof requestBodySchema>>,
+    _context: Context
   ): Promise<ITypedRequestResponse<z.infer<typeof responseBodySchema>>> {
-    let binData;
-    binData = [
+    const binData = [
       {
         date: getWeekdayIso(2),
         binName: 'General Waste',
@@ -76,6 +75,10 @@ export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof res
         binContent: 'Plastics',
       },
     ];
+
+    // Add a harmless await to satisfy require-await
+    await Promise.resolve();
+
     return {
       body: binData.map((item) => IScheduleSchema.parse(item)),
       statusCode: 200,

@@ -1,28 +1,28 @@
 name: PR pipeline
 
 on:
-  # Trigger the workflow on pull request
-  pull_request
+  pull_request:
 
 permissions:
   contents: write
   issues: write
   pull-requests: write
+  security-events: write   # REQUIRED for SARIF uploads
 
 jobs:
   pr:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+
     steps:
-      # Setup
       - name: ⚙️ Checkout Code
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6
+        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
       - name: ⚙️ Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd
 
       - name: ⚙️ Setup Node.js
-        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6
+        uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f
         with:
           node-version-file: '.node-version'
 
@@ -31,8 +31,6 @@ jobs:
 
       - name: ⚙️ Validate Typescript
         run: npm run build:validate
-
-      # Formatting
 
       - name: 📝 Terraform naming convention lint
         run: npm run development:organize:tf -- --dry-run
@@ -48,3 +46,35 @@ jobs:
       - name: 📝 Terraform validate
         working-directory: ./terraform/
         run: terraform validate
+
+      # -----------------------------
+      # 🔒 tfsec with inline PR comments
+      # -----------------------------
+      - name: Run tfsec (SARIF output)
+        run: |
+          mkdir -p reports
+          tfsec --format sarif --out reports/tfsec.sarif ./terraform
+
+      - name: Upload tfsec SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/tfsec.sarif
+
+      # -----------------------------
+      # 🔒 checkov with inline PR comments
+      # -----------------------------
+      - name: Run checkov (SARIF output)
+        run: |
+          mkdir -p reports
+          checkov -d ./terraform --output sarif --output-file-path reports/checkov.sarif
+
+      - name: Upload checkov SARIF to GitHub
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: reports/checkov.sarif
+
+      # -----------------------------
+      # 🧪 Unit tests
+      # -----------------------------
+      - name: Run unit tests
+        run: npm test -- --run

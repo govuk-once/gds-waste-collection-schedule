@@ -2,7 +2,8 @@ import { search } from '@aws-lambda-powertools/jmespath';
 import { Logger } from '@aws-lambda-powertools/logger';
 import { Metrics } from '@aws-lambda-powertools/metrics';
 import { Tracer } from '@aws-lambda-powertools/tracer';
-import { ObservabilityService } from '@common/services';
+import { CacheService, ConfigurationService, ObservabilityService } from '@common/services';
+import { OrdinanceSurveyService } from '@common/services/ordinanceSurveyService';
 
 enum Mode {
   SINGLETON,
@@ -64,6 +65,24 @@ export const iocGetObservabilityService = ioc(
   `ObservabilityService`,
   Mode.SINGLETON,
   () => new ObservabilityService(iocGetLogger(), iocGetMetrics(), iocGetTracer())
+);
+
+export const iocGetConfigurationService = ioc(
+  `ConfigurationService`,
+  Mode.SINGLETON,
+  () => new ConfigurationService(iocGetObservabilityService())
+);
+
+export const iocGetCacheService = ioc(
+  `CacheService`,
+  Mode.SINGLETON,
+  () => new CacheService(iocGetConfigurationService(), iocGetObservabilityService())
+);
+
+export const iocGetOrdinanceSurveyService = ioc(
+  `OrdinanceSurveyService`,
+  Mode.SINGLETON,
+  () => new OrdinanceSurveyService(iocGetConfigurationService())
 );
 
 // Utility FN simplifying integration of dependencies which depend on config within handler

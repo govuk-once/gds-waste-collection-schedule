@@ -1,14 +1,18 @@
 import {
   APIHandler,
   HandlerDependencies,
+  iocGetConfigurationService,
   iocGetObservabilityService,
+  iocGetOrdinanceSurveyService,
   type ITypedRequestEvent,
   type ITypedRequestResponse,
 } from '@common';
-import { ObservabilityService } from '@common/services';
+import { ConfigurationService, ObservabilityService } from '@common/services';
+import { OrdinanceSurveyService } from '@common/services/ordinanceSurveyService';
 import httpResponseSerializer from '@middy/http-response-serializer';
 import { IAddressByPostcodeSchema } from '@project/lambdas/interfaces/index';
 import type { Context } from 'aws-lambda';
+import httpErrors from 'http-errors';
 import 'reflect-metadata';
 import z from 'zod';
 
@@ -30,6 +34,8 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
 
   constructor(
     protected observability: ObservabilityService,
+    protected config: ConfigurationService,
+    public ordinanceSurveyService : OrdinanceSurveyService,
     asyncDependencies?: () => HandlerDependencies<GetAddressByPostcode>
   ) {
     super(observability);
@@ -41,31 +47,21 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
     context: Context
   ): Promise<ITypedRequestResponse<z.infer<typeof responseBodySchema>>> {
     const postCode = event.pathParameters?.postcode;
-    const addresses = [
-      {
-        addressFull: '12 Bedway Lane, Bristol, B12 3ED',
-        uprn: '1234567890',
-        localCustodianCode: 'BR',
-      },
-      {
-        addressFull: '13 Bedway Lane, Bristol, B12 3ED',
-        uprn: '1234567891',
-        localCustodianCode: 'BR',
-      },
-      {
-        addressFull: '13 Bedway Lane, Bristol, B12 3ED',
-        uprn: '1234567894',
-        localCustodianCode: 'BR',
-      },
-    ];
+    if(!postCode) {
+      throw new httpErrors.BadRequest();
+    }
+
+    const addresses = await this.ordinanceSurveyService.getPostcode(postCode);
+
+    console.log(addresses)
     return {
-      body: addresses.map((item) => IAddressByPostcodeSchema.parse(item)),
+      body: addresses.map((item : any) => IAddressByPostcodeSchema.parse(item)),
       statusCode: 200,
     };
   }
 }
 
-export const handler = new GetAddressByPostcode(iocGetObservabilityService()).handler().use(
+export const handler = new GetAddressByPostcode(iocGetObservabilityService(), iocGetConfigurationService(), iocGetOrdinanceSurveyService()).handler().use(
   httpResponseSerializer({
     serializers: [
       {

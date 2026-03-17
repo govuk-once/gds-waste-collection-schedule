@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/unbound-method */
 import axios from 'axios';
 import httpErrors from 'http-errors';
+import type { Mocked } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { OrdinanceSurveyService } from './ordinanceSurveyService';
 
 vi.mock('axios');
-const axiosMock = axios as vi.Mocked<typeof axios>;
+const axiosMock = axios as Mocked<typeof axios>;
 
 describe('OrdinanceSurveyService (with caching)', () => {
   let service: OrdinanceSurveyService;

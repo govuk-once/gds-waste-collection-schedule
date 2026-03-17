@@ -9,7 +9,6 @@ import {
 } from '@common';
 import { ConfigurationService, ObservabilityService } from '@common/services';
 import { OrdinanceSurveyService } from '@common/services/ordinanceSurveyService';
-import httpResponseSerializer from '@middy/http-response-serializer';
 import { IAddressByPostcodeSchema } from '@project/lambdas/interfaces/index';
 import type { Context } from 'aws-lambda';
 import httpErrors from 'http-errors';
@@ -58,14 +57,3 @@ export const handler = new GetAddressByPostcode(
   iocGetOrdinanceSurveyService()
 )
   .handler()
-  .use(
-    httpResponseSerializer({
-      serializers: [
-        {
-          regex: /^application\/json$/,
-          serializer: ({ body }) => JSON.stringify(body),
-        },
-      ],
-      defaultContentType: 'application/json',
-    })
-  );

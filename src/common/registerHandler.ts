@@ -36,5 +36,3 @@ export function registerHandler<
     return await handlerFn(event, context);
   };
 }
-
-export const ioc = container;

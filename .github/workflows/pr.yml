@@ -40,15 +40,15 @@ jobs:
         run: npm run development:organize:tf -- --dry-run
 
       - name: Terraform init (no backend)
-        working-directory: ./terraform/notifications
+        working-directory: ./terraform
         run: terraform init -backend=false
 
       - name: 📝 Terraform Formatting
-        working-directory: ./terraform/notifications
+        working-directory: ./terraform
         run: terraform fmt -check -diff -recursive
 
       - name: 📝 Terraform validate
-        working-directory: ./terraform/notifications
+        working-directory: ./terraform
         run: terraform validate
 
       # Testing
@@ -71,7 +71,7 @@ jobs:
         uses: hasura/comment-progress@146c635f3e325d478025e29e5043ec1c07c0e36c # v2.3.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          repository: 'govuk-once/gds-unified-notification-service'
+          repository: 'govuk-once/gds-waste-collection-schedule'
           number: ${{ github.event.number }}
           id: unittestscomment
           message: '${{steps.unittests.outputs.report}}'

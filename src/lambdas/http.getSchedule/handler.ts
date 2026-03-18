@@ -7,7 +7,6 @@ import {
 } from '@common';
 import { BinColoursEnum } from '@common/models/binColoursEnum';
 import { ObservabilityService } from '@common/services';
-import httpResponseSerializer from '@middy/http-response-serializer';
 import { IScheduleSchema } from '@project/lambdas/interfaces/ISchedule';
 import type { Context } from 'aws-lambda';
 import 'reflect-metadata';
@@ -86,14 +85,4 @@ export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof res
   }
 }
 
-export const handler = new GetSchedule(iocGetObservabilityService()).handler().use(
-  httpResponseSerializer({
-    serializers: [
-      {
-        regex: /^application\/json$/,
-        serializer: ({ body }) => JSON.stringify(body),
-      },
-    ],
-    defaultContentType: 'application/json',
-  })
-);
+export const handler = new GetSchedule(iocGetObservabilityService()).handler();

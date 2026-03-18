@@ -129,9 +129,8 @@ components:
           type: string
           enum:
             - councilNotSupported
-            - postcodeNotFound
-            - invalidPostcode
-            - unknownError
+            - invalidUPRN
+            - unknownError       
     BadAddressRequestResponse:
       type: object
       required:
@@ -141,5 +140,7 @@ components:
           type: string
           enum:
             - councilNotSupported
-            - invalidUPRN
+            - postcodeNotFound
+            - invalidPostcode
             - unknownError
+            

@@ -19,7 +19,7 @@ import httpErrorHandler from '@middy/http-error-handler';
 import httpEventNormalizer from '@middy/http-event-normalizer';
 import httpHeaderNormalizer from '@middy/http-header-normalizer';
 import httpJsonBodyParser from '@middy/http-json-body-parser';
-import type { ALBEvent, APIGatewayEvent, APIGatewayProxyEventV2, Context } from 'aws-lambda';
+import type { ALBEvent, APIGatewayEvent, APIGatewayProxyEventV2, APIGatewayProxyResult, Context } from 'aws-lambda';
 import type { z, ZodAny, ZodType } from 'zod';
 
 export type RequestEvent = APIGatewayEvent | APIGatewayProxyEventV2 | ALBEvent;
@@ -37,6 +37,7 @@ export abstract class APIHandler<
   constructor(protected observability: ObservabilityService) {}
 
   protected dependencies: (() => HandlerDependencies<object>)[] = [];
+
   public injectDependencies(dependencies?: () => HandlerDependencies<object>) {
     this.observability.logger.info(`IoC Injection setup!`);
     if (dependencies) {
@@ -45,19 +46,17 @@ export abstract class APIHandler<
   }
 
   public implementation(
-    event: ITypedRequestEvent<InferredInputSchema>,
-    context: Context
+    _event: ITypedRequestEvent<InferredInputSchema>,
+    _context: Context
   ): Promise<ITypedRequestResponse<InferredOutputSchema>> {
     throw new Error('Not Implemented');
   }
 
   /**
-   * Request structure clean up
-   * Auto serialize response bodies into JSON
-   * Auto catch HTTP Error exceptions & convert them into responses
+   * Legacy sanitization middleware chain (kept unchanged).
    */
-  protected sanitizationMiddlewares(middy: IMiddleware): IMiddleware {
-    return middy
+  protected sanitizationMiddlewares(m: IMiddleware): IMiddleware {
+    return m
       .use(httpHeaderNormalizer())
       .use(
         httpJsonBodyParser({
@@ -70,13 +69,34 @@ export abstract class APIHandler<
   }
 
   /**
-   * Adds Observability middlewares
+   * Custom JSON error middleware to ensure all thrown errors return JSON.
    */
-  protected observabilityMiddlewares(middy: IMiddleware): IMiddleware {
-    // TODO: Look into removing slight overlap between powertools observability (xray sdk) and otel (AWS's new preference)
-    // https://github.com/aws-powertools/powertools-lambda/discussions/90
-    // May need to re-write these middlewares to strip powertools and use @opentelemetry instances instead
-    return middy
+  protected jsonErrorMiddleware = () => ({
+    onError: (request: { error: unknown; response?: APIGatewayProxyResult }): APIGatewayProxyResult => {
+      const err = request.error as { statusCode?: number; message?: string };
+
+      const statusCode = typeof err.statusCode === 'number' ? err.statusCode : 500;
+
+      const message = typeof err.message === 'string' ? err.message : 'internalServerError';
+
+      const response: APIGatewayProxyResult = {
+        statusCode,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: message,
+        }),
+      };
+
+      request.response = response;
+      return response;
+    },
+  });
+
+  /**
+   * Observability middlewares.
+   */
+  protected observabilityMiddlewares(m: IMiddleware): IMiddleware {
+    return m
       .use(
         injectLambdaContext(this.observability.logger, {
           correlationIdPath: 'requestContext.requestId',
@@ -92,53 +112,37 @@ export abstract class APIHandler<
   }
 
   /**
-   * Adds layers of structure enforcement for incoming and outcoming data
+   * Request/response validation.
    */
-  protected validationMiddlewares(middy: IMiddleware): IMiddleware {
-    return middy
+  protected validationMiddlewares(m: IMiddleware): IMiddleware {
+    return m
       .use(requestValidatorMiddleware(this.requestBodySchema))
       .use(responseValidatorMiddleware(this.responseBodySchema));
   }
 
   /**
-   * Ties in separate middleware groups
-   * @param middy
-   * @returns
+   * Main middleware chain used by handler().
    */
-  protected middlewares(middy: IMiddleware): IMiddleware {
-    //
-    // 1. Input cleanup (headers, JSON parsing, event normalization)
-    //
-    middy = middy
+  protected middlewares(m: IMiddleware): IMiddleware {
+    // 1. Input cleanup
+    m = m
       .use(httpHeaderNormalizer())
       .use(httpJsonBodyParser({ disableContentTypeError: true }))
       .use(httpEventNormalizer());
 
-    //
-    // 2. Request validation (validate event.body BEFORE handler runs)
-    //
-    middy = middy.use(requestValidatorMiddleware(this.requestBodySchema));
+    // 2. Request validation
+    m = m.use(requestValidatorMiddleware(this.requestBodySchema));
 
-    //
     // 3. Handler executes here
-    //
 
-    //
-    // 4. Response validation (validate response.body BEFORE serialization)
-    //
-    middy = middy.use(responseValidatorMiddleware(this.responseBodySchema));
+    // 4. Response validation
+    m = m.use(responseValidatorMiddleware(this.responseBodySchema));
 
-    //
-    // 5. Serialization + error handling
-    //
-    middy = middy
-      .use(serializeBodyToJson()) // must run AFTER response validation
-      .use(httpErrorHandler());
+    // 5. Serialization + JSON error handling
+    m = m.use(serializeBodyToJson()).use(this.jsonErrorMiddleware()).use(httpErrorHandler());
 
-    //
-    // 6. Observability (wrap entire lifecycle)
-    //
-    middy = middy
+    // 6. Observability
+    m = m
       .use(
         injectLambdaContext(this.observability.logger, {
           correlationIdPath: 'requestContext.requestId',
@@ -152,17 +156,18 @@ export abstract class APIHandler<
         })
       );
 
-    return middy;
+    return m;
   }
 
-  // Wrapper FN to consistently initialize operations
+  /**
+   * Final handler wrapper.
+   */
   public handler(): MiddyfiedHandler<IRequestEvent, IRequestResponse> {
     this.observability.metrics.addMetric('API_CALL_TRIGGERED', MetricUnit.Count, 1);
+
     return this.middlewares(middy()).handler(async (event, context) => {
-      // Call DI before each request is handled
       await initializeDependencies(this, this.dependencies);
 
-      //
       return (await this.implementation(
         event as unknown as ITypedRequestEvent<InferredInputSchema>,
         context

@@ -5,7 +5,9 @@ import httpErrors from 'http-errors';
 
 type DPA = {
   UPRN: string;
-  ADDRESS: string;
+  BUILDING_NUMBER: string;
+  THOROUGHFARE_NAME: string;
+  POSTCODE: string;
   LOCAL_CUSTODIAN_CODE: number | string;
 };
 
@@ -19,10 +21,22 @@ type OSApiResponse = {
 
 export function mapDpaToAddressSchema(dpa: DPA) {
   return {
-    addressFull: dpa.ADDRESS,
+    addressFull: `${dpa.BUILDING_NUMBER}, ${dpa.THOROUGHFARE_NAME}, ${dpa.POSTCODE}`,
     uprn: String(dpa.UPRN),
     localCustodianCode: String(dpa.LOCAL_CUSTODIAN_CODE),
   };
+}
+
+function normalisePostcode(raw: string): string {
+  const cleaned = raw.replace(/\s+/g, '').toUpperCase();
+
+  // Postcodes must be at least 5 chars (A9 9AA) and at most 7 (AA99 9AA)
+  if (cleaned.length < 5 || cleaned.length > 7) {
+    throw new httpErrors.BadRequest('invalidPostcode');
+  }
+
+  // Insert space before last 3 characters
+  return cleaned.slice(0, -3) + ' ' + cleaned.slice(-3);
 }
 
 export class OrdinanceSurveyService {
@@ -32,23 +46,22 @@ export class OrdinanceSurveyService {
   constructor(protected config: ConfigurationService) {}
 
   public async getPostcode(postcode: string) {
-    const cleaned = decodeURIComponent(postcode).trim().toUpperCase();
+    const normalised = normalisePostcode(decodeURIComponent(postcode).trim());
 
     const ukPostcodeRegex = /^([A-Z]{1,2}\d[A-Z\d]? \d[A-Z]{2}|GIR 0AA)$/;
 
-    if (!ukPostcodeRegex.test(cleaned)) {
+    if (!ukPostcodeRegex.test(normalised)) {
       throw new httpErrors.BadRequest('invalidPostcode');
     }
 
-    // Check cache first
-    if (this.cache.has(cleaned)) {
-      return this.cache.get(cleaned)!;
+    if (this.cache.has(normalised)) {
+      return this.cache.get(normalised)!;
     }
 
     const apiKey = await this.config.getParameter(StringParameters.Config.OrdinanceSurvey.ApiKey);
     const baseUrl = await this.config.getParameter(StringParameters.Config.OrdinanceSurvey.BaseUrl);
 
-    const url = `${baseUrl}?postcode=${encodeURIComponent(cleaned)}&key=${apiKey}`;
+    const url = `${baseUrl}?postcode=${encodeURIComponent(normalised)}&key=${apiKey}`;
 
     const response: AxiosResponse<OSApiResponse> = await axios.get(url);
 
@@ -58,8 +71,7 @@ export class OrdinanceSurveyService {
 
     const mapped = response.data.results.map((item) => mapDpaToAddressSchema(item.DPA));
 
-    // Cache the mapped result
-    this.cache.set(cleaned, mapped);
+    this.cache.set(normalised, mapped);
 
     return mapped;
   }

@@ -12,7 +12,6 @@ const axiosMock = axios as Mocked<typeof axios>;
 describe('OrdinanceSurveyService (with caching)', () => {
   let service: OrdinanceSurveyService;
 
-  // Vitest mock first → cast whole object later
   const configMock = {
     getParameter: vi.fn(),
   };
@@ -20,7 +19,6 @@ describe('OrdinanceSurveyService (with caching)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    // Cast the whole object, not the nested method
     service = new OrdinanceSurveyService(configMock as unknown as ConfigurationService);
 
     configMock.getParameter
@@ -38,7 +36,9 @@ describe('OrdinanceSurveyService (with caching)', () => {
           {
             DPA: {
               UPRN: '1001',
-              ADDRESS: '1 Example Road, Cardiff',
+              BUILDING_NUMBER: '1',
+              THOROUGHFARE_NAME: 'Example Road',
+              POSTCODE: 'CF10 1AA',
               LOCAL_CUSTODIAN_CODE: 999,
             },
           },
@@ -48,7 +48,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
 
     const mapped = [
       {
-        addressFull: '1 Example Road, Cardiff',
+        addressFull: '1, Example Road, CF10 1AA',
         uprn: '1001',
         localCustodianCode: '999',
       },

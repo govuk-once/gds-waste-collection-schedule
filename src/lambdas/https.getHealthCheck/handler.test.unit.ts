@@ -4,11 +4,7 @@ import z from 'zod';
 import { GetHealthcheck } from './handler';
 
 // Shared test helpers
-import {
-  createMockContext,
-  createMockEvent,
-  createMockObservabilityService,
-} from '@project/_testHelpers/mockHelpers';
+import { createMockContext, createMockEvent, createMockObservabilityService } from '@project/_testHelpers/mockHelpers';
 
 describe('GetHealthcheck', () => {
   let handler: GetHealthcheck;

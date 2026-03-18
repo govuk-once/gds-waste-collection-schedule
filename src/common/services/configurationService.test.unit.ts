@@ -15,7 +15,6 @@ vi.mock('@aws-sdk/client-ssm', () => {
   };
 });
 
-
 describe('ConfigurationService', () => {
   let service: ConfigurationService;
 

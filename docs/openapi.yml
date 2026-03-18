@@ -130,7 +130,7 @@ components:
           enum:
             - councilNotSupported
             - invalidUPRN
-            - unknownError       
+            - unknownError
     BadAddressRequestResponse:
       type: object
       required:
@@ -143,4 +143,3 @@ components:
             - postcodeNotFound
             - invalidPostcode
             - unknownError
-            

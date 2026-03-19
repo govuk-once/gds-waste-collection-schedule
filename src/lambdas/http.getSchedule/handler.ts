@@ -1,44 +1,33 @@
 import {
   APIHandler,
   HandlerDependencies,
+  iocGetConfigurationService,
   iocGetObservabilityService,
   type ITypedRequestEvent,
   type ITypedRequestResponse,
 } from '@common';
-import { BinColoursEnum } from '@common/models/binColoursEnum';
-import { ObservabilityService } from '@common/services';
+
+import { ConfigurationService, CouncilScheduleService, ObservabilityService } from '@common/services';
+import { ScheduleItem } from '@common/services/councilSchedule/councilSchedule.types';
 import { IScheduleSchema } from '@project/lambdas/interfaces/ISchedule';
+
 import type { Context } from 'aws-lambda';
+import httpErrors from 'http-errors';
 import 'reflect-metadata';
 import z from 'zod';
 
 const requestBodySchema = z.unknown().optional().nullable();
 const responseBodySchema = z.array(IScheduleSchema);
 
-/* Lambda Request Example
-{
-  "pathParameters": {
-    "uprn": "1234567890",
-    "localCustodianCode": "BR"
-  }  
-}
-*/
-const getWeekdayIso = (targetDay: number, from = new Date()) => {
-  const date = new Date(from);
-  const day = date.getDay();
-
-  const diff = (targetDay - day + 7) % 7;
-  date.setDate(date.getDate() + diff);
-  return date.toISOString().split('T')[0];
-};
-
 export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof responseBodySchema> {
-  public operationId: string = 'getSchedule';
+  public operationId = 'getSchedule';
   public requestBodySchema = requestBodySchema;
   public responseBodySchema = responseBodySchema;
 
   constructor(
     protected observability: ObservabilityService,
+    protected config: ConfigurationService,
+    protected councilScheduleService: CouncilScheduleService,
     asyncDependencies?: () => HandlerDependencies<GetSchedule>
   ) {
     super(observability);
@@ -46,43 +35,27 @@ export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof res
   }
 
   public async implementation(
-    _event: ITypedRequestEvent<z.infer<typeof requestBodySchema>>,
+    event: ITypedRequestEvent<z.infer<typeof requestBodySchema>>,
     _context: Context
   ): Promise<ITypedRequestResponse<z.infer<typeof responseBodySchema>>> {
-    const binData = [
-      {
-        date: getWeekdayIso(2),
-        binName: 'General Waste',
-        binColour: BinColoursEnum.BLACK.toString().toLowerCase(),
-        binContent: 'All Waste',
-      },
-      {
-        date: getWeekdayIso(3),
-        binName: 'Garden',
-        binColour: BinColoursEnum.GREEN.toString().toLowerCase(),
-        binContent: 'Garden Waste',
-      },
-      {
-        date: new Date().toISOString().split('T')[0],
-        binName: 'Recycling',
-        binColour: BinColoursEnum.BLUE.toString().toLowerCase(),
-        binContent: 'Paper',
-      },
-      {
-        date: new Date().toISOString().split('T')[0],
-        binName: 'Recycling',
-        binContent: 'Plastics',
-      },
-    ];
+    const uprn = event.queryStringParameters?.uprn;
+    const localCustodianCode = event.queryStringParameters?.localCustodianCode;
 
-    // Add a harmless await to satisfy require-await
-    await Promise.resolve();
+    if (!uprn || !localCustodianCode) {
+      throw new httpErrors.BadRequest('missingParameter');
+    }
+
+    const schedule = await this.councilScheduleService.getSchedule(uprn, localCustodianCode);
 
     return {
-      body: binData.map((item) => IScheduleSchema.parse(item)),
+      body: schedule.map((item: ScheduleItem) => IScheduleSchema.parse(item)),
       statusCode: 200,
     };
   }
 }
 
-export const handler = new GetSchedule(iocGetObservabilityService()).handler();
+export const handler = new GetSchedule(
+  iocGetObservabilityService(),
+  iocGetConfigurationService(),
+  new CouncilScheduleService(iocGetConfigurationService())
+).handler();

@@ -131,6 +131,7 @@ components:
             - councilNotSupported
             - invalidUPRN
             - unknownError
+            - missingParameter
     BadAddressRequestResponse:
       type: object
       required:

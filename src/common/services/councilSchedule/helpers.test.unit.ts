@@ -69,7 +69,6 @@ describe('guessColour', () => {
 });
 
 describe('normaliseBinName', () => {
-
   it('capitalises first letter and lowercases the rest', () => {
     expect(normaliseBinName('RECYCLING')).toBe('Recycling');
     expect(normaliseBinName('gEnErAl')).toBe('General');

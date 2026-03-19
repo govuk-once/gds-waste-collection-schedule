@@ -1,7 +1,7 @@
 openapi: '3.0.3'
 info:
   title: Waste Collection Schedule Service
-  version: '0.4'
+  version: '0.5'
 servers:
   - url: /api
 paths:
@@ -34,11 +34,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/Schedule'
         '400':
-          description: Bad request
+          description: Bad schedule request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BadRequestResponse'
+                $ref: '#/components/schemas/BadScheduleRequestResponse'
         default:
           description: Unexpected error
   /address/{postcode}:
@@ -66,11 +66,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/ListAddress'
         '400':
-          description: Bad request
+          description: Bad address request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BadRequestResponse'
+                $ref: '#/components/schemas/BadAddressRequestResponse'
         default:
           description: Unexpected error
 
@@ -120,7 +120,19 @@ components:
         localCustodianCode:
           type: string
           description: A unique reference number for each council provided by OS Data Hub
-    BadRequestResponse:
+    BadScheduleRequestResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          enum:
+            - councilNotSupported
+            - invalidUPRN
+            - unknownError
+            - missingParameter
+    BadAddressRequestResponse:
       type: object
       required:
         - message

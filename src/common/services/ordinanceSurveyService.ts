@@ -10,6 +10,7 @@ type DPA = {
   POSTCODE: string;
   LOCAL_CUSTODIAN_CODE: number | string;
   SUB_BUILDING_NAME: string;
+  BUILDING_NAME: string;
 };
 
 type OSResult = {
@@ -21,7 +22,7 @@ type OSApiResponse = {
 };
 
 export function mapDpaToAddressSchema(dpa: DPA) {
-  const parts = [dpa.SUB_BUILDING_NAME, dpa.BUILDING_NUMBER, dpa.THOROUGHFARE_NAME, dpa.POSTCODE].filter(Boolean);
+  const parts = [ dpa.BUILDING_NAME, dpa.SUB_BUILDING_NAME, dpa.BUILDING_NUMBER, dpa.THOROUGHFARE_NAME, dpa.POSTCODE].filter(Boolean);
 
   return {
     addressFull: parts.join(', '),

@@ -37,6 +37,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
             DPA: {
               UPRN: '1001',
               BUILDING_NUMBER: '1',
+              SUB_BUILDING_NAME: 'Flat 2',
               THOROUGHFARE_NAME: 'Example Road',
               POSTCODE: 'CF10 1AA',
               LOCAL_CUSTODIAN_CODE: 999,
@@ -48,7 +49,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
 
     const mapped = [
       {
-        addressFull: '1, Example Road, CF10 1AA',
+        addressFull: 'Flat 2, 1, Example Road, CF10 1AA',
         uprn: '1001',
         localCustodianCode: '999',
       },
@@ -87,6 +88,37 @@ describe('OrdinanceSurveyService (with caching)', () => {
       await expect(service.getPostcode('INVALID')).rejects.toThrowError(new httpErrors.BadRequest('invalidPostcode'));
 
       expect(service['cache'].has('INVALID')).toBe(false);
+    });
+
+    it('handles empty SUB_BUILDING_NAME and does not include it in addressFull', async () => {
+      const apiResponseEmptySub = {
+        data: {
+          results: [
+            {
+              DPA: {
+                UPRN: '2002',
+                SUB_BUILDING_NAME: '',
+                BUILDING_NUMBER: '10',
+                THOROUGHFARE_NAME: 'Test Street',
+                POSTCODE: 'CF10 2BB',
+                LOCAL_CUSTODIAN_CODE: 123,
+              },
+            },
+          ],
+        },
+      };
+
+      axiosMock.get.mockResolvedValue(apiResponseEmptySub);
+
+      const result = await service.getPostcode('CF10 2BB');
+
+      expect(result).toEqual([
+        {
+          addressFull: '10, Test Street, CF10 2BB',
+          uprn: '2002',
+          localCustodianCode: '123',
+        },
+      ]);
     });
   });
 });

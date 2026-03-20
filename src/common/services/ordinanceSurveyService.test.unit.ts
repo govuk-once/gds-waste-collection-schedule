@@ -36,8 +36,9 @@ describe('OrdinanceSurveyService (with caching)', () => {
           {
             DPA: {
               UPRN: '1001',
-              BUILDING_NUMBER: '1',
               SUB_BUILDING_NAME: 'Flat 2',
+              BUILDING_NAME: 'The Oaks',
+              BUILDING_NUMBER: '1',
               THOROUGHFARE_NAME: 'Example Road',
               POSTCODE: 'CF10 1AA',
               LOCAL_CUSTODIAN_CODE: 999,
@@ -49,7 +50,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
 
     const mapped = [
       {
-        addressFull: 'Flat 2, 1, Example Road, CF10 1AA',
+        addressFull: 'Flat 2, The Oaks, 1, Example Road, CF10 1AA',
         uprn: '1001',
         localCustodianCode: '999',
       },
@@ -90,18 +91,57 @@ describe('OrdinanceSurveyService (with caching)', () => {
       expect(service['cache'].has('INVALID')).toBe(false);
     });
 
-    it('handles empty SUB_BUILDING_NAME and does not include it in addressFull', async () => {
+    //
+    // ────────────────────────────────────────────────────────────────
+    //   Address formatting tests (SUB_BUILDING_NAME + BUILDING_NAME)
+    // ────────────────────────────────────────────────────────────────
+    //
+
+    it('includes SUB_BUILDING_NAME and BUILDING_NAME when both are present', async () => {
+      const apiResponseBoth = {
+        data: {
+          results: [
+            {
+              DPA: {
+                UPRN: '3001',
+                SUB_BUILDING_NAME: 'Flat 7',
+                BUILDING_NAME: 'Rose Court',
+                BUILDING_NUMBER: '22',
+                THOROUGHFARE_NAME: 'Queen Street',
+                POSTCODE: 'CF10 3AB',
+                LOCAL_CUSTODIAN_CODE: 456,
+              },
+            },
+          ],
+        },
+      };
+
+      axiosMock.get.mockResolvedValue(apiResponseBoth);
+
+      const result = await service.getPostcode('CF10 3AB');
+
+      expect(result).toEqual([
+        {
+          addressFull: 'Flat 7, Rose Court, 22, Queen Street, CF10 3AB',
+          uprn: '3001',
+          localCustodianCode: '456',
+        },
+      ]);
+    });
+
+    it('omits SUB_BUILDING_NAME when empty but includes BUILDING_NAME', async () => {
       const apiResponseEmptySub = {
         data: {
           results: [
             {
               DPA: {
-                UPRN: '2002',
+                UPRN: '3002',
                 SUB_BUILDING_NAME: '',
-                BUILDING_NUMBER: '10',
-                THOROUGHFARE_NAME: 'Test Street',
-                POSTCODE: 'CF10 2BB',
-                LOCAL_CUSTODIAN_CODE: 123,
+                BUILDING_NAME: 'Rose Court',
+                BUILDING_NUMBER: '22',
+                THOROUGHFARE_NAME: 'Queen Street',
+                POSTCODE: 'CF10 3AB',
+                LOCAL_CUSTODIAN_CODE: 456,
               },
             },
           ],
@@ -110,13 +150,107 @@ describe('OrdinanceSurveyService (with caching)', () => {
 
       axiosMock.get.mockResolvedValue(apiResponseEmptySub);
 
-      const result = await service.getPostcode('CF10 2BB');
+      const result = await service.getPostcode('CF10 3AB');
 
       expect(result).toEqual([
         {
-          addressFull: '10, Test Street, CF10 2BB',
-          uprn: '2002',
-          localCustodianCode: '123',
+          addressFull: 'Rose Court, 22, Queen Street, CF10 3AB',
+          uprn: '3002',
+          localCustodianCode: '456',
+        },
+      ]);
+    });
+
+    it('omits BUILDING_NAME when empty but includes SUB_BUILDING_NAME', async () => {
+      const apiResponseEmptyBuildingName = {
+        data: {
+          results: [
+            {
+              DPA: {
+                UPRN: '3003',
+                SUB_BUILDING_NAME: 'Flat 7',
+                BUILDING_NAME: '',
+                BUILDING_NUMBER: '22',
+                THOROUGHFARE_NAME: 'Queen Street',
+                POSTCODE: 'CF10 3AB',
+                LOCAL_CUSTODIAN_CODE: 456,
+              },
+            },
+          ],
+        },
+      };
+
+      axiosMock.get.mockResolvedValue(apiResponseEmptyBuildingName);
+
+      const result = await service.getPostcode('CF10 3AB');
+
+      expect(result).toEqual([
+        {
+          addressFull: 'Flat 7, 22, Queen Street, CF10 3AB',
+          uprn: '3003',
+          localCustodianCode: '456',
+        },
+      ]);
+    });
+
+    it('omits SUB_BUILDING_NAME and BUILDING_NAME when both are empty', async () => {
+      const apiResponseBothEmpty = {
+        data: {
+          results: [
+            {
+              DPA: {
+                UPRN: '3004',
+                SUB_BUILDING_NAME: '',
+                BUILDING_NAME: '',
+                BUILDING_NUMBER: '22',
+                THOROUGHFARE_NAME: 'Queen Street',
+                POSTCODE: 'CF10 3AB',
+                LOCAL_CUSTODIAN_CODE: 456,
+              },
+            },
+          ],
+        },
+      };
+
+      axiosMock.get.mockResolvedValue(apiResponseBothEmpty);
+
+      const result = await service.getPostcode('CF10 3AB');
+
+      expect(result).toEqual([
+        {
+          addressFull: '22, Queen Street, CF10 3AB',
+          uprn: '3004',
+          localCustodianCode: '456',
+        },
+      ]);
+    });
+
+    it('handles missing SUB_BUILDING_NAME and BUILDING_NAME fields gracefully', async () => {
+      const apiResponseMissing = {
+        data: {
+          results: [
+            {
+              DPA: {
+                UPRN: '3005',
+                BUILDING_NUMBER: '22',
+                THOROUGHFARE_NAME: 'Queen Street',
+                POSTCODE: 'CF10 3AB',
+                LOCAL_CUSTODIAN_CODE: 456,
+              },
+            },
+          ],
+        },
+      };
+
+      axiosMock.get.mockResolvedValue(apiResponseMissing);
+
+      const result = await service.getPostcode('CF10 3AB');
+
+      expect(result).toEqual([
+        {
+          addressFull: '22, Queen Street, CF10 3AB',
+          uprn: '3005',
+          localCustodianCode: '456',
         },
       ]);
     });

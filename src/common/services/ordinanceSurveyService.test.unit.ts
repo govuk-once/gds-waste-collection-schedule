@@ -91,12 +91,6 @@ describe('OrdinanceSurveyService (with caching)', () => {
       expect(service['cache'].has('INVALID')).toBe(false);
     });
 
-    //
-    // ────────────────────────────────────────────────────────────────
-    //   Address formatting tests (SUB_BUILDING_NAME + BUILDING_NAME)
-    // ────────────────────────────────────────────────────────────────
-    //
-
     it('includes SUB_BUILDING_NAME and BUILDING_NAME when both are present', async () => {
       const apiResponseBoth = {
         data: {

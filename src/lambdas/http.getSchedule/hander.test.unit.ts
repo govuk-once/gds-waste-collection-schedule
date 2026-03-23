@@ -1,77 +1,99 @@
-import { BinColoursEnum } from '@common/models/binColoursEnum';
-import { createMockContext, createMockEvent, createMockObservabilityService } from '@project/_testHelpers/mockHelpers';
+/* eslint-disable @typescript-eslint/unbound-method */
+
+import httpErrors from 'http-errors';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+import type { ITypedRequestEvent } from '@common';
+import type { ConfigurationService, CouncilScheduleService, ObservabilityService } from '@common/services';
+import type { Context } from 'aws-lambda';
+
 import { IScheduleSchema } from '@project/lambdas/interfaces/ISchedule';
-import { beforeEach, describe, expect, it } from 'vitest';
 import { GetSchedule } from './handler';
 
-describe('GetSchedule', () => {
+describe('GetSchedule Handler', () => {
   let handler: GetSchedule;
 
+  // ---------------------------------------------------------------------------
+  // Fully typed mocks
+  // ---------------------------------------------------------------------------
+
+  const observabilityMock = {
+    logger: {
+      info: vi.fn(),
+      error: vi.fn(),
+    },
+    tracer: {
+      addServiceName: vi.fn(),
+      putAnnotation: vi.fn(),
+    },
+    metrics: {
+      addMetric: vi.fn(),
+    },
+  } as unknown as ObservabilityService;
+
+  const configMock = {
+    getParameter: vi.fn(),
+  } as unknown as ConfigurationService;
+
+  const councilScheduleMock = {
+    getSchedule: vi.fn<() => Promise<unknown>>(),
+  } as unknown as CouncilScheduleService;
+
+  // ---------------------------------------------------------------------------
+
   beforeEach(() => {
-    handler = new GetSchedule(createMockObservabilityService());
+    vi.clearAllMocks();
+    handler = new GetSchedule(observabilityMock, configMock, councilScheduleMock);
   });
 
-  it('returns a 200 response with valid schedule items', async () => {
-    const result = await handler.implementation(createMockEvent(), createMockContext());
+  // ---------------------------------------------------------------------------
 
-    expect(result.statusCode).toBe(200);
-    expect(Array.isArray(result.body)).toBe(true);
-    expect(result.body.length).toBe(4);
+  describe('implementation', () => {
+    it('throws BadRequest when uprn or localCustodianCode is missing', async () => {
+      const event = {
+        queryStringParameters: {},
+      } as unknown as ITypedRequestEvent<unknown>;
 
-    result.body.forEach((item) => {
-      expect(() => IScheduleSchema.parse(item)).not.toThrow();
+      await expect(handler.implementation(event, {} as Context)).rejects.toBeInstanceOf(httpErrors.BadRequest);
     });
-  });
 
-  it('produces correct bin colours and names', async () => {
-    const result = await handler.implementation(createMockEvent(), createMockContext());
+    it('propagates errors thrown by councilScheduleService.getSchedule', async () => {
+      const event = {
+        queryStringParameters: {
+          uprn: '100024629',
+          localCustodianCode: '5060',
+        },
+      } as unknown as ITypedRequestEvent<unknown>;
 
-    const items = result.body;
+      const error = new httpErrors.BadRequest('councilNotSupported');
+      vi.mocked(councilScheduleMock.getSchedule).mockRejectedValue(error);
 
-    expect(items[0].binColour).toBe(BinColoursEnum.BLACK.toLowerCase());
-    expect(items[1].binColour).toBe(BinColoursEnum.GREEN.toLowerCase());
-    expect(items[2].binColour).toBe(BinColoursEnum.BLUE.toLowerCase());
-
-    expect(items[0].binName).toBe('General Waste');
-    expect(items[1].binName).toBe('Garden');
-    expect(items[2].binName).toBe('Recycling');
-  });
-
-  it('includes today’s date for recycling entries', async () => {
-    const today = new Date().toISOString().split('T')[0];
-
-    const result = await handler.implementation(createMockEvent(), createMockContext());
-
-    const recycling = result.body.filter((x) => x.binName === 'Recycling');
-
-    expect(recycling.length).toBe(2);
-    recycling.forEach((item) => {
-      expect(item.date).toBe(today);
+      await expect(handler.implementation(event, {} as Context)).rejects.toThrowError(error);
     });
-  });
 
-  it('computes weekday ISO dates correctly for General Waste and Garden', async () => {
-    const result = await handler.implementation(createMockEvent(), createMockContext());
+    it('returns 200 and parsed schedule when valid', async () => {
+      const event = {
+        queryStringParameters: {
+          uprn: '100024629',
+          localCustodianCode: '5060',
+        },
+      } as unknown as ITypedRequestEvent<unknown>;
 
-    const general = result.body[0];
-    const garden = result.body[1];
+      const mockSchedule = [
+        {
+          date: '2026-03-19',
+          binName: 'Refuse',
+          binColour: 'black',
+          binContent: undefined,
+        },
+      ];
 
-    const today = new Date();
-    const todayDay = today.getDay();
+      vi.mocked(councilScheduleMock.getSchedule).mockResolvedValue(mockSchedule);
 
-    const expectedTuesday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + ((2 - todayDay + 7) % 7))
-      .toISOString()
-      .split('T')[0];
+      const result = await handler.implementation(event, {} as Context);
 
-    const expectedWednesday = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate() + ((3 - todayDay + 7) % 7)
-    )
-      .toISOString()
-      .split('T')[0];
-
-    expect(general.date).toBe(expectedTuesday);
-    expect(garden.date).toBe(expectedWednesday);
+      expect(result.statusCode).toBe(200);
+      expect(result.body).toEqual(mockSchedule.map((s) => IScheduleSchema.parse(s)));
+    });
   });
 });

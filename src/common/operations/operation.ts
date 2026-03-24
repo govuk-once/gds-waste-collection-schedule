@@ -37,7 +37,7 @@ export abstract class APIHandler<
 
   constructor(
     protected observability: ObservabilityService,
-    protected config: ConfigurationService 
+    protected config: ConfigurationService
   ) {}
 
   protected dependencies: (() => HandlerDependencies<object>)[] = [];
@@ -59,11 +59,10 @@ export abstract class APIHandler<
   private cachedApiKey: string | null = null;
 
   protected apiKeyMiddleware = () => ({
-    before: async (request: any) => {
+    before: async (request: { event: IRequestEvent }) => {
+      // Load once per Lambda container
       if (!this.cachedApiKey) {
-        this.cachedApiKey = await this.config.getParameter(
-          StringParameters.Config.ApiKey
-        );
+        this.cachedApiKey = await this.config.getParameter(StringParameters.Config.ApiKey);
       }
 
       const provided = request.event.headers?.['x-api-key'];
@@ -90,7 +89,7 @@ export abstract class APIHandler<
       .use(serializeBodyToJson())
       .use(httpErrorHandler());
   }
-  
+
   /**
    * Custom JSON error middleware to ensure all thrown errors return JSON.
    */

@@ -1,4 +1,5 @@
 import { ConfigurationService } from '@common/services/configurationService';
+import { resolverTable } from '@common/services/councilSchedule/resolverTable';
 import { InMemoryTTLCache, StringParameters } from '@common/utils';
 import axios, { AxiosResponse } from 'axios';
 import httpErrors from 'http-errors';
@@ -80,6 +81,12 @@ export class OrdinanceSurveyService {
     }
 
     const mapped = response.data.results.map((item) => mapDpaToAddressSchema(item.DPA));
+
+    for (const addr of mapped) {
+      if (!resolverTable[addr.localCustodianCode]) {
+        throw new httpErrors.BadRequest('councilNotSupported');
+      }
+    }
 
     this.cache.set(normalised, mapped);
 

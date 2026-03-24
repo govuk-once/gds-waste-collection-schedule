@@ -8,24 +8,31 @@ import {
   getRushmoorSchedule,
   getYorkSchedule,
 } from '@common/services/councilSchedule/';
-import { ScheduleItem } from '@common/services/councilSchedule/councilSchedule.types';
+
+import { resolverTable } from '@common/services/councilSchedule/resolverTable';
+
+const resolverFunctions = {
+  york: getYorkSchedule,
+  harrow: getHarrowSchedule,
+  hdc: getHDCSchedule,
+  barking: getBarkingSchedule,
+  rushmoor: getRushmoorSchedule,
+} as const;
 
 export class CouncilScheduleService {
   constructor(private config: ConfigurationService) {}
 
-  private resolvers: Record<string, (uprn: string) => Promise<ScheduleItem[]>> = {
-    '2741': getYorkSchedule,
-    '5450': getHarrowSchedule,
-    '520': getHDCSchedule,
-    '5060': getBarkingSchedule,
-    '1750': getRushmoorSchedule,
-  };
-
   public async getSchedule(uprn: string, localCustodianCode: string) {
-    const resolver = this.resolvers[localCustodianCode];
+    const resolverName = resolverTable[localCustodianCode];
+
+    if (!resolverName) {
+      throw new httpErrors.BadRequest('councilNotSupported');
+    }
+
+    const resolver = resolverFunctions[resolverName as keyof typeof resolverFunctions];
 
     if (!resolver) {
-      throw new httpErrors.BadRequest('councilNotSupported');
+      throw new httpErrors.BadRequest('resolverNotImplemented');
     }
 
     return resolver(uprn);

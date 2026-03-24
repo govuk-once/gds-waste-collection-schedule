@@ -30,7 +30,7 @@ export class GetSchedule extends APIHandler<typeof requestBodySchema, typeof res
     protected councilScheduleService: CouncilScheduleService,
     asyncDependencies?: () => HandlerDependencies<GetSchedule>
   ) {
-    super(observability);
+    super(observability, config);
     this.injectDependencies(asyncDependencies);
   }
 

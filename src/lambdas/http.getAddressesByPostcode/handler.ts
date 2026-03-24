@@ -29,7 +29,7 @@ export class GetAddressByPostcode extends APIHandler<typeof requestBodySchema, t
     public ordinanceSurveyService: OrdinanceSurveyService,
     asyncDependencies?: () => HandlerDependencies<GetAddressByPostcode>
   ) {
-    super(observability);
+    super(observability, config);
     this.injectDependencies(asyncDependencies);
   }
 

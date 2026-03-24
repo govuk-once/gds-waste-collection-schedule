@@ -9,5 +9,6 @@ export const StringParameters = {
       ApiKey: 'config/OrdinanceSurvey/ApiKey',
       BaseUrl: 'config/OrdinanceSurvey/BaseUrl',
     },
+    ApiKey: 'config/ApiKey'
   },
 } as const;

@@ -29,6 +29,7 @@ module "parameter_store_external_configuration" {
     "config/common/enabled"          = "true"
     "config/OrdinanceSurvey/ApiKey"  = ""
     "config/OrdinanceSurvey/BaseUrl" = ""
+    "config/ApiKey"                  = ""
 
     # Temporary key
 

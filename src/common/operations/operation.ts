@@ -14,6 +14,7 @@ import {
   serializeBodyToJson,
 } from '@common/middlewares';
 import { ObservabilityService } from '@common/services';
+import { StringParameters } from '@common/utils/parameters';
 import middy, { type MiddyfiedHandler } from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
 import httpEventNormalizer from '@middy/http-event-normalizer';
@@ -34,7 +35,10 @@ export abstract class APIHandler<
   public abstract requestBodySchema: InputSchema;
   public abstract responseBodySchema: OutputSchema;
 
-  constructor(protected observability: ObservabilityService) {}
+  constructor(
+    protected observability: ObservabilityService,
+    protected config: any 
+  ) {}
 
   protected dependencies: (() => HandlerDependencies<object>)[] = [];
 
@@ -52,9 +56,28 @@ export abstract class APIHandler<
     throw new Error('Not Implemented');
   }
 
-  /**
-   * Legacy sanitization middleware chain (kept unchanged).
-   */
+  private cachedApiKey: string | null = null;
+
+  protected apiKeyMiddleware = () => ({
+    before: async (request: any) => {
+      if (!this.cachedApiKey) {
+        this.cachedApiKey = await this.config.getParameter(
+          StringParameters.Config.ApiKey
+        );
+      }
+
+      const provided = request.event.headers?.['x-api-key'];
+
+      if (!provided) {
+        throw Object.assign(new Error('Missing API key'), { statusCode: 401 });
+      }
+
+      if (provided !== this.cachedApiKey) {
+        throw Object.assign(new Error('Invalid API key'), { statusCode: 403 });
+      }
+    },
+  });
+
   protected sanitizationMiddlewares(m: IMiddleware): IMiddleware {
     return m
       .use(httpHeaderNormalizer())
@@ -67,7 +90,7 @@ export abstract class APIHandler<
       .use(serializeBodyToJson())
       .use(httpErrorHandler());
   }
-
+  
   /**
    * Custom JSON error middleware to ensure all thrown errors return JSON.
    */
@@ -130,7 +153,8 @@ export abstract class APIHandler<
       .use(httpJsonBodyParser({ disableContentTypeError: true }))
       .use(httpEventNormalizer());
 
-    // 2. Request validation
+    // 2. Request validation and API key validation
+    m = m.use(this.apiKeyMiddleware());
     m = m.use(requestValidatorMiddleware(this.requestBodySchema));
 
     // 3. Handler executes here

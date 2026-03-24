@@ -13,7 +13,7 @@ import {
   responseValidatorMiddleware,
   serializeBodyToJson,
 } from '@common/middlewares';
-import { ObservabilityService } from '@common/services';
+import { ConfigurationService, ObservabilityService } from '@common/services';
 import { StringParameters } from '@common/utils/parameters';
 import middy, { type MiddyfiedHandler } from '@middy/core';
 import httpErrorHandler from '@middy/http-error-handler';
@@ -37,7 +37,7 @@ export abstract class APIHandler<
 
   constructor(
     protected observability: ObservabilityService,
-    protected config: any 
+    protected config: ConfigurationService 
   ) {}
 
   protected dependencies: (() => HandlerDependencies<object>)[] = [];

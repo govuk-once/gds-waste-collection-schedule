@@ -1,11 +1,12 @@
 import {
   APIHandler,
   HandlerDependencies,
+  iocGetConfigurationService,
   iocGetObservabilityService,
   type ITypedRequestEvent,
   type ITypedRequestResponse,
 } from '@common';
-import { ObservabilityService } from '@common/services';
+import { ConfigurationService, ObservabilityService } from '@common/services';
 import type { Context } from 'aws-lambda';
 import z from 'zod';
 
@@ -19,9 +20,10 @@ export class GetHealthcheck extends APIHandler<typeof requestBodySchema, typeof 
 
   constructor(
     protected observability: ObservabilityService,
+    protected config: ConfigurationService,
     asyncDependencies?: () => HandlerDependencies<GetHealthcheck>
   ) {
-    super(observability);
+    super(observability, config);
     this.injectDependencies(asyncDependencies);
   }
 
@@ -42,4 +44,4 @@ export class GetHealthcheck extends APIHandler<typeof requestBodySchema, typeof 
   }
 }
 
-export const handler = new GetHealthcheck(iocGetObservabilityService()).handler();
+export const handler = new GetHealthcheck(iocGetObservabilityService(), iocGetConfigurationService()).handler();

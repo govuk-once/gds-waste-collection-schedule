@@ -4,14 +4,19 @@ import z from 'zod';
 import { GetHealthcheck } from './handler';
 
 // Shared test helpers
+import { ConfigurationService } from '@common/services';
 import { createMockContext, createMockEvent, createMockObservabilityService } from '@project/_testHelpers/mockHelpers';
 
 describe('GetHealthcheck', () => {
   let handler: GetHealthcheck;
 
+  const configMock = {
+    getParameter: vi.fn(),
+  } as unknown as ConfigurationService;
+
   beforeEach(() => {
     const obs = createMockObservabilityService();
-    handler = new GetHealthcheck(obs);
+    handler = new GetHealthcheck(obs, configMock);
   });
 
   it('returns a 200 OK response', async () => {

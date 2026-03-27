@@ -69,8 +69,13 @@ describe('guessColour', () => {
 });
 
 describe('normaliseBinName', () => {
-  it('capitalises first letter and lowercases the rest', () => {
+  it('capitalises first letter and lowercases the rest when no brackets exist', () => {
     expect(normaliseBinName('RECYCLING')).toBe('Recycling');
     expect(normaliseBinName('gEnErAl')).toBe('General');
+  });
+
+  it('returns the normalised text inside brackets when present', () => {
+    expect(normaliseBinName('Grey bin (non-recyclable)')).toBe('Non-recyclable');
+    expect(normaliseBinName('Food waste (ORGANIC)')).toBe('Organic');
   });
 });

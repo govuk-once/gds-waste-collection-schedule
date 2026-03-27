@@ -53,5 +53,15 @@ export function guessColour(binName?: string) {
 
 export function normaliseBinName(name?: string): string {
   if (!name) return '';
-  return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+
+  // Extract bracket content
+  const match = name.match(/\((.*?)\)/);
+  if (match) {
+    const inside = match[1].trim();
+    return inside.charAt(0).toUpperCase() + inside.slice(1).toLowerCase();
+  }
+
+  // Otherwise normalise the whole name
+  const cleaned = name.trim();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
 }

@@ -41,7 +41,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
               BUILDING_NUMBER: '1',
               THOROUGHFARE_NAME: 'Example Road',
               POSTCODE: 'CF10 1AA',
-              LOCAL_CUSTODIAN_CODE: 999,
+              LOCAL_CUSTODIAN_CODE: 2741,
             },
           },
         ],
@@ -52,7 +52,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
       {
         addressFull: 'Flat 2, The Oaks, 1, Example Road, CF10 1AA',
         uprn: '1001',
-        localCustodianCode: '999',
+        localCustodianCode: '2741',
       },
     ];
 
@@ -103,7 +103,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
                 BUILDING_NUMBER: '22',
                 THOROUGHFARE_NAME: 'Queen Street',
                 POSTCODE: 'CF10 3AB',
-                LOCAL_CUSTODIAN_CODE: 456,
+                LOCAL_CUSTODIAN_CODE: 2741,
               },
             },
           ],
@@ -118,7 +118,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
         {
           addressFull: 'Flat 7, Rose Court, 22, Queen Street, CF10 3AB',
           uprn: '3001',
-          localCustodianCode: '456',
+          localCustodianCode: '2741',
         },
       ]);
     });
@@ -135,7 +135,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
                 BUILDING_NUMBER: '22',
                 THOROUGHFARE_NAME: 'Queen Street',
                 POSTCODE: 'CF10 3AB',
-                LOCAL_CUSTODIAN_CODE: 456,
+                LOCAL_CUSTODIAN_CODE: 2741,
               },
             },
           ],
@@ -150,7 +150,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
         {
           addressFull: 'Rose Court, 22, Queen Street, CF10 3AB',
           uprn: '3002',
-          localCustodianCode: '456',
+          localCustodianCode: '2741',
         },
       ]);
     });
@@ -167,7 +167,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
                 BUILDING_NUMBER: '22',
                 THOROUGHFARE_NAME: 'Queen Street',
                 POSTCODE: 'CF10 3AB',
-                LOCAL_CUSTODIAN_CODE: 456,
+                LOCAL_CUSTODIAN_CODE: 2741,
               },
             },
           ],
@@ -182,7 +182,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
         {
           addressFull: 'Flat 7, 22, Queen Street, CF10 3AB',
           uprn: '3003',
-          localCustodianCode: '456',
+          localCustodianCode: '2741',
         },
       ]);
     });
@@ -199,7 +199,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
                 BUILDING_NUMBER: '22',
                 THOROUGHFARE_NAME: 'Queen Street',
                 POSTCODE: 'CF10 3AB',
-                LOCAL_CUSTODIAN_CODE: 456,
+                LOCAL_CUSTODIAN_CODE: 2741,
               },
             },
           ],
@@ -214,7 +214,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
         {
           addressFull: '22, Queen Street, CF10 3AB',
           uprn: '3004',
-          localCustodianCode: '456',
+          localCustodianCode: '2741',
         },
       ]);
     });
@@ -229,7 +229,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
                 BUILDING_NUMBER: '22',
                 THOROUGHFARE_NAME: 'Queen Street',
                 POSTCODE: 'CF10 3AB',
-                LOCAL_CUSTODIAN_CODE: 456,
+                LOCAL_CUSTODIAN_CODE: 2741,
               },
             },
           ],
@@ -244,7 +244,7 @@ describe('OrdinanceSurveyService (with caching)', () => {
         {
           addressFull: '22, Queen Street, CF10 3AB',
           uprn: '3005',
-          localCustodianCode: '456',
+          localCustodianCode: '2741',
         },
       ]);
     });
